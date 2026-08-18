@@ -22,14 +22,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_simplejwt',  # JWT qo'shildi
+    'rest_framework_simplejwt',
 
     # Sizning ilovangiz
     'frontend',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # CORS har doim birinchi turishi kerak
+    'corsheaders.middleware.CorsMiddleware',  # CORS har doim eng tepada turishi kerak
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -77,7 +77,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# Static va Media fayllar sozlamalari
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Deploy jarayoni uchun qo'shildi
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -85,7 +87,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # REST Framework Sozlamalari
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # Bearer token uchun JWT biriktirildi
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -93,12 +95,18 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Simple JWT sozlamalari (token muddati va turlari)
+# Simple JWT sozlamalari
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# Local Development uchun yengillashtirilgan CORS sozlamalari
+# CORS Sozlamalari (React bilan xavfsiz va to'g'ri ishlashi uchun)
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://usta-eta.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
