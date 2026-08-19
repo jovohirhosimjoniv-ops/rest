@@ -142,21 +142,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .models import Buyurtma  # Buyurtma modelini chaqiramiz
+
+# Agar Buyurtma modulingiz bo'lsa import qiling (masalan: Order yoki Buyurtma)
+# from .models import Buyurtma 
 
 User = get_user_model()
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def statistika_view(request):
-    # 1. Mijozlar soni: 'mijoz' roliga ega bo'lganlar (yoki ustalar roida bo'lmagan foydalanuvchilar)
     mijozlar_soni = User.objects.filter(profile__rol='mijoz').count()
-    
-    # 2. Ustalar soni: 'usta' roliga ega bo'lganlar
     ustalar_soni = User.objects.filter(profile__rol='usta').count()
-    
-    # 3. Tugatilgan ishlar: Buyurtma modelidagi tugatilgan statuslar boyicha (masalan 'bajarildi' yoki 'completed')
-    # Agar status maydoni bolmasa, bor buyurtmalar sonini olish mumkin:
     tugatilgan_ishlar = Buyurtma.objects.filter(status='bajarildi').count() if hasattr(Buyurtma, 'status') else Buyurtma.objects.count()
 
     return Response({
