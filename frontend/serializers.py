@@ -1,5 +1,4 @@
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from .models import Buyurtma, Item, Portfolio, Profile
@@ -32,12 +31,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
-    avatar = serializers.ImageField(source="profile.rasm", required=False, allow_null=True)
+    avatar = serializers.ImageField(required=False, allow_null=True, write_only=True)
     telefon = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    rol = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    rol = serializers.CharField(write_only=True, required=False, allow_blank=True, default="mijoz")
     viloyat = serializers.CharField(write_only=True, required=False, allow_blank=True)
     shahar = serializers.CharField(write_only=True, required=False, allow_blank=True)
-
     haqida = serializers.CharField(write_only=True, required=False, allow_blank=True)
     tajriba = serializers.IntegerField(write_only=True, required=False, default=0)
     kategoriya = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -52,6 +50,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "password",
+            "first_name",
+            "last_name",
             "avatar",
             "telefon",
             "rol",
@@ -66,9 +66,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        profile_obj = validated_data.pop("profile", {})
-        avatar = profile_obj.get("rasm", None)
-
+        avatar = validated_data.pop("avatar", None)
         telefon = validated_data.pop("telefon", "")
         rol = validated_data.pop("rol", "mijoz")
         viloyat = validated_data.pop("viloyat", "")
@@ -80,21 +78,26 @@ class RegisterSerializer(serializers.ModelSerializer):
         vaqt = validated_data.pop("vaqt", "")
         narx = validated_data.pop("narx", 0)
 
-        user = User.objects.create_user(**validated_data)
+        # Foydalanuvchi yaratish
+        password = validated_data.pop("password")
+        user = User.objects.create_user(password=password, **validated_data)
 
-        Profile.objects.create(
+        # Profil yaratish yoki mavjud bo'lsa yangilash
+        Profile.objects.update_or_create(
             user=user,
-            rasm=avatar,
-            telefon=telefon,
-            rol=rol,
-            viloyat=viloyat,
-            shahar=shahar,
-            haqida=haqida,
-            tajriba=tajriba,
-            kategoriya=kategoriya,
-            konikma=konikma,
-            vaqt=vaqt,
-            narx=narx,
+            defaults={
+                "rasm": avatar,
+                "telefon": telefon,
+                "rol": rol,
+                "viloyat": viloyat,
+                "shahar": shahar,
+                "haqida": haqida,
+                "tajriba": tajriba,
+                "kategoriya": kategoriya,
+                "konikma": konikma,
+                "vaqt": vaqt,
+                "narx": narx,
+            },
         )
 
         return user
@@ -164,41 +167,32 @@ class UstaDetailSerializer(serializers.ModelSerializer):
 
 
 class BuyurtmaUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "username", "first_name", "last_name"]
-
-
-from rest_framework import serializers
-from .models import Buyurtma, Profile
-from django.contrib.auth.models import User
-
-class BuyurtmaUserSerializer(serializers.ModelSerializer):
-    rasm = serializers.ImageField(source='profile.rasm', read_only=True)
-    viloyat = serializers.CharField(source='profile.viloyat', read_only=True)
-    shahar = serializers.CharField(source='profile.shahar', read_only=True)
+    rasm = serializers.ImageField(source="profile.rasm", read_only=True)
+    viloyat = serializers.CharField(source="profile.viloyat", read_only=True)
+    shahar = serializers.CharField(source="profile.shahar", read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'rasm', 'viloyat', 'shahar']
+        fields = ["id", "username", "first_name", "last_name", "rasm", "viloyat", "shahar"]
+
 
 class BuyurtmaSerializer(serializers.ModelSerializer):
     user = BuyurtmaUserSerializer(read_only=True)
-    usta_details = BuyurtmaUserSerializer(source='usta', read_only=True) # Frontend uchun usta tafsilotlari
+    usta_details = BuyurtmaUserSerializer(source="usta", read_only=True)
 
     class Meta:
         model = Buyurtma
         fields = [
-            'id',
-            'user',
-            'usta',
-            'usta_details',
-            'xizmat_turi',
-            'sana',
-            'vaqt',
-            'manzil',
-            'izoh',
-            'status',
-            'yaratilgan_vaqt',
+            "id",
+            "user",
+            "usta",
+            "usta_details",
+            "xizmat_turi",
+            "sana",
+            "vaqt",
+            "manzil",
+            "izoh",
+            "status",
+            "yaratilgan_vaqt",
         ]
-        read_only_fields = ['id', 'user', 'yaratilgan_vaqt']
+        read_only_fields = ["id", "user", "yaratilgan_vaqt"]

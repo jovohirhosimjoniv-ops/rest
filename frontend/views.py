@@ -148,12 +148,32 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+from django.db.models import Q
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from .models import Buyurtma
+
+User = get_user_model()
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def statistika_view(request):
-    mijozlar_soni = User.objects.filter(profile__rol='mijoz').count()
+    # Ustalar: profili bor va roli 'usta' bo'lganlar
     ustalar_soni = User.objects.filter(profile__rol='usta').count()
-    tugatilgan_ishlar = Buyurtma.objects.filter(status='bajarildi').count() if hasattr(Buyurtma, 'status') else Buyurtma.objects.count()
+
+    # Mijozlar: profili 'mijoz' bo'lganlar YOKI profili yo'q/roli 'usta' bo'lmagan barcha userlar
+    mijozlar_soni = User.objects.filter(
+        Q(profile__rol='mijoz') | Q(profile__isnull=True) | ~Q(profile__rol='usta')
+    ).distinct().count()
+
+    # Tugatilgan ishlar soni
+    tugatilgan_ishlar = (
+        Buyurtma.objects.filter(status='bajarildi').count() 
+        if hasattr(Buyurtma, 'status') 
+        else Buyurtma.objects.count()
+    )
 
     return Response({
         "mijozlar": mijozlar_soni,
